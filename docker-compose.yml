@@ -1,0 +1,187 @@
+version: '3.8'
+
+################################################################################
+# DevSecOps Toolkit - Docker Compose Configuration
+################################################################################
+# Purpose: Easy container management and development workflow
+# Usage: docker-compose run --rm devsecops bash
+################################################################################
+
+services:
+  # Main DevSecOps toolkit container
+  devsecops:
+    image: devsecops-toolkit:latest
+    container_name: devsecops-workspace
+    hostname: devsecops
+    
+    # Build configuration (if building locally)
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        BUILD_DATE: ${BUILD_DATE:-}
+        VCS_REF: ${VCS_REF:-}
+    
+    # Environment variables
+    environment:
+      # Kubernetes
+      - KUBECONFIG=/root/.kube/config
+      - KUBE_EDITOR=vim
+      
+      # AWS
+      - AWS_PROFILE=${AWS_PROFILE:-default}
+      - AWS_REGION=${AWS_REGION:-us-east-1}
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-us-east-1}
+      
+      # GCP
+      - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/application_default_credentials.json
+      - GCLOUD_PROJECT=${GCLOUD_PROJECT:-}
+      
+      # Azure
+      - AZURE_CONFIG_DIR=/root/.azure
+      
+      # Terminal settings
+      - TERM=xterm-256color
+      - COLORTERM=truecolor
+      
+      # Git
+      - GIT_EDITOR=vim
+      
+      # Disable telemetry
+      - AZURE_CORE_COLLECT_TELEMETRY=no
+      - DO_NOT_TRACK=1
+    
+    # Volume mounts
+    volumes:
+      # Kubernetes configuration (read-only)
+      - ${HOME}/.kube:/root/.kube:ro
+      
+      # Cloud provider credentials (read-only)
+      - ${HOME}/.aws:/root/.aws:ro
+      - ${HOME}/.config/gcloud:/root/.config/gcloud:ro
+      - ${HOME}/.azure:/root/.azure:ro
+      
+      # SSH keys (read-only for git operations)
+      - ${HOME}/.ssh:/root/.ssh:ro
+      
+      # Git configuration
+      - ${HOME}/.gitconfig:/root/.gitconfig:ro
+      
+      # Workspace (read-write)
+      - ./workspace:/workspace
+      
+      # Docker socket for Docker-in-Docker operations
+      - /var/run/docker.sock:/var/run/docker.sock
+      
+      # Persistent shell history
+      - devsecops-history:/root/.bash_history_volume
+    
+    # Working directory
+    working_dir: /workspace
+    
+    # Keep container running
+    stdin_open: true
+    tty: true
+    
+    # Network configuration
+    network_mode: host
+    
+    # Security options (adjust based on your needs)
+    # Uncomment for additional security
+    # security_opt:
+    #   - no-new-privileges:true
+    # cap_drop:
+    #   - ALL
+    # cap_add:
+    #   - NET_BIND_SERVICE
+    
+    # Resource limits (adjust based on your needs)
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: '2'
+    #       memory: 4G
+    #     reservations:
+    #       cpus: '1'
+    #       memory: 2G
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "kubectl", "version", "--client"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    
+    # Command override (optional)
+    # command: bash
+    
+    # Labels
+    labels:
+      com.example.description: "DevSecOps Multi-Tool Container"
+      com.example.department: "DevOps"
+      com.example.team: "Platform"
+
+  # Alternative: Minimal security-focused container
+  devsecops-secure:
+    extends: devsecops
+    container_name: devsecops-secure
+    
+    # Security hardening
+    security_opt:
+      - no-new-privileges:true
+      - seccomp:unconfined
+    
+    cap_drop:
+      - ALL
+    
+    cap_add:
+      - NET_BIND_SERVICE
+      - CHOWN
+      - SETUID
+      - SETGID
+    
+    # Read-only root filesystem
+    read_only: true
+    
+    # Temporary filesystems
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=1g
+      - /var/tmp:rw,noexec,nosuid,size=1g
+    
+    # Run as non-root (if configured in Dockerfile)
+    # user: "1000:1000"
+
+  # Development mode with live reload
+  devsecops-dev:
+    extends: devsecops
+    container_name: devsecops-dev
+    
+    volumes:
+      - ${HOME}/.kube:/root/.kube
+      - ${HOME}/.aws:/root/.aws
+      - ${HOME}/.config/gcloud:/root/.config/gcloud
+      - ./workspace:/workspace
+      - /var/run/docker.sock:/var/run/docker.sock
+      - devsecops-dev-cache:/root/.cache
+    
+    environment:
+      - DEVELOPMENT=true
+      - DEBUG=true
+    
+    command: bash
+
+# Named volumes for persistence
+volumes:
+  devsecops-history:
+    driver: local
+  devsecops-dev-cache:
+    driver: local
+
+# Networks (if not using host networking)
+# networks:
+#   devsecops-net:
+#     driver: bridge
+#     ipam:
+#       config:
+#         - subnet: 172.28.0.0/16

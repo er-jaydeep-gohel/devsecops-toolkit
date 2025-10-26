@@ -694,4 +694,7 @@ Built with tools from the amazing open-source community:
 
 [Report Bug](https://github.com/er-jaydeep-gohel/devsecops-toolkit/issues) · [Request Feature](https://github.com/er-jaydeep-gohel/devsecops-toolkit/issues) · [Contribute](https://github.com/er-jaydeep-gohel/devsecops-toolkit/pulls)
 
+
+Like my work : ☕ [Send coffee](https://buymeacoffee.com/jaydeepgohel) and [GitHub stars](https://github.com/er-jaydeep-gohel/devsecops-toolkit).
+
 </div>

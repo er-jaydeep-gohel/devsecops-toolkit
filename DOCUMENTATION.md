@@ -901,4 +901,6 @@ To add new tools:
 
 ---
 
-**Built with ❤️ for DevSecOps Engineers worldwide**
+Like my work : ☕ [Send coffee](https://buymeacoffee.com/jaydeepgohel) and [GitHub stars](https://github.com/er-jaydeep-gohel/devsecops-toolkit).
+
+**Built with ❤️ for DevSecOps and Cloud Security**
